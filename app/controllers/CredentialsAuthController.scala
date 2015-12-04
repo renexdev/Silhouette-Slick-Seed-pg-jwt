@@ -7,7 +7,7 @@ import com.mohiva.play.silhouette.api._
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.util.{ Clock, Credentials }
-import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.impl.authenticators.JWTAuthenticator
 import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
 import com.mohiva.play.silhouette.impl.providers._
 import forms.SignInForm
@@ -37,14 +37,14 @@ import scala.language.postfixOps
  */
 class CredentialsAuthController @Inject() (
   val messagesApi: MessagesApi,
-  val env: Environment[User, CookieAuthenticator],
+  val env: Environment[User, JWTAuthenticator],
   userService: UserService,
   authInfoRepository: AuthInfoRepository,
   credentialsProvider: CredentialsProvider,
   socialProviderRegistry: SocialProviderRegistry,
   configuration: Configuration,
   clock: Clock)
-  extends Silhouette[User, CookieAuthenticator] {
+  extends Silhouette[User, JWTAuthenticator] {
 
   /**
    * Authenticates a user against the credentials provider.
@@ -55,6 +55,7 @@ class CredentialsAuthController @Inject() (
     SignInForm.form.bindFromRequest.fold(
       form => Future.successful(BadRequest(views.html.signIn(form, socialProviderRegistry))),
       data => {
+        //println("entra data")
         val credentials = Credentials(data.email, data.password)
         credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
           val result = Redirect(routes.ApplicationController.index())
@@ -65,16 +66,24 @@ class CredentialsAuthController @Inject() (
                 case authenticator if data.rememberMe =>
                   authenticator.copy(
                     expirationDateTime = clock.now + c.as[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorExpiry"),
-                    idleTimeout = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorIdleTimeout"),
-                    cookieMaxAge = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.cookieMaxAge")
+                    idleTimeout = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorIdleTimeout")//,
+                    //cookieMaxAge = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.cookieMaxAge")
                   )
                 case authenticator => authenticator
               }.flatMap { authenticator =>
+                println("entra authenticator")
+                println(user)
                 env.eventBus.publish(LoginEvent(user, request, request2Messages))
-                env.authenticatorService.init(authenticator).flatMap { v =>
-                  env.authenticatorService.embed(v, result)
-                }
+                //env.authenticatorService.init(authenticator).flatMap { v =>
+                //println(v)
+                //env.authenticatorService.embed(v,result)
+                //}
+                env.authenticatorService.init(authenticator).map { token =>
+                println()
+                result
               }
+              }
+          
             case None => Future.failed(new IdentityNotFoundException("Couldn't find user"))
           }
         }.recover {

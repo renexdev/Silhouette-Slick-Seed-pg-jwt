@@ -6,7 +6,8 @@ import com.mohiva.play.silhouette.api.services._
 import com.mohiva.play.silhouette.api.util._
 import com.mohiva.play.silhouette.api.{ Environment, EventBus }
 import com.mohiva.play.silhouette.impl.authenticators._
-import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
+//import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
+import com.mohiva.play.silhouette.impl.daos.{ CacheAuthenticatorDAO, DelegableAuthInfoDAO }
 import com.mohiva.play.silhouette.impl.providers._
 import com.mohiva.play.silhouette.impl.providers.oauth1._
 import com.mohiva.play.silhouette.impl.providers.oauth1.secrets.{ CookieSecretProvider, CookieSecretSettings }
@@ -72,10 +73,10 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
   @Provides
   def provideEnvironment(
     userService: UserService,
-    authenticatorService: AuthenticatorService[CookieAuthenticator],
-    eventBus: EventBus): Environment[User, CookieAuthenticator] = {
+    authenticatorService: AuthenticatorService[JWTAuthenticator],
+    eventBus: EventBus): Environment[User, JWTAuthenticator] = {
 
-    Environment[User, CookieAuthenticator](
+    Environment[User, JWTAuthenticator](
       userService,
       authenticatorService,
       Seq(),
@@ -127,14 +128,22 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
    */
   @Provides
   def provideAuthenticatorService(
-    fingerprintGenerator: FingerprintGenerator,
+    cacheLayer: CacheLayer,
     idGenerator: IDGenerator,
     configuration: Configuration,
-    clock: Clock): AuthenticatorService[CookieAuthenticator] = {
+    clock: Clock): AuthenticatorService[JWTAuthenticator] = {
 
-    val config = configuration.underlying.as[CookieAuthenticatorSettings]("silhouette.authenticator")
-    new CookieAuthenticatorService(config, None, fingerprintGenerator, idGenerator, clock)
+    val config = configuration.underlying.as[JWTAuthenticatorSettings]("silhouette.authenticator")
+    new JWTAuthenticatorService(config, Some(new CacheAuthenticatorDAO[JWTAuthenticator](cacheLayer)), idGenerator, clock)
   }
+  //  fingerprintGenerator: FingerprintGenerator,
+  //  idGenerator: IDGenerator,
+  //  configuration: Configuration,
+  //  clock: Clock): AuthenticatorService[JWTAuthenticator] = {
+
+  //  val config = configuration.underlying.as[JWTAuthenticatorSettings]("silhouette.authenticator")
+  //  new JWTAuthenticatorService(config, None, fingerprintGenerator, idGenerator, clock)
+  //}
 
   /**
    * Provides the auth info repository.
