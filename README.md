@@ -1,47 +1,19 @@
-Silhouette Slick Seed Template
-==============================
+Adaptation of Silhouette Slick Seed Template: JWTAuthenticator instead of CookieAuthenticator
+==========================================
+Master branch is and adaptation of Silhouette Slick Seed Template for using pg database instead of H2. The JWTAuthenticator implementations is been codded at the jwtimpl branch...
+The core idea:
+I'm trying to imlement JWTAuthenticator in an existing template that uses 
+CookieAuthenticator:
+https://github.com/sbrunk/play-silhouette-slick-seed
 
-This is a fork of the official Silhouette Seed project. If you want to have a first look at Silhouette, I suggest you have a look at the [official project](https://github.com/mohiva/play-silhouette-seed).
+I got a route issue when comparing the original ouput (doing simply println) of val result = Redirect(routes.ApplicationController.index()) after the following code line
 
-The Silhouette Seed project is an Activator template which shows how [Silhouette](https://github.com/mohiva/play-silhouette) can be implemented in a Play Framework application. It's a starting point which can be extended to fit your needs.
-It uses the [play-slick](https://github.com/playframework/play-slick) library for database access.
+ env.authenticatorService.init(authenticator).flatMap { v =>
 
-## Example
+In the original Cookie implementation the output gives 
+"GET /", but when I run my JWTAuthenticator version I got a Result(303, Map(Location -> /)) instead!. Therefore, I'm not able to get the user logged koz the result doesnt route to the proper index page.
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
-
-(The "Build App" phase will take a few minutes)
-
-Currently, there is no live example of this template.
-
-## Features
-
-* Sign Up
-* Sign In (Credentials)
-* Social Auth (Facebook, Google+, VK, Twitter, Xing, Yahoo)
-* Two-factor authentication with Clef
-* Dependency Injection with Guice
-* Publishing Events
-* Avatar service
-* Remember me functionality
-* [Security headers](https://www.playframework.com/documentation/2.4.x/SecurityHeaders)
-* [CSRF Protection](https://www.playframework.com/documentation/2.4.x/ScalaCsrf)
-* play-slick database access
-
-## Documentation
-
-Consulate the [Silhouette documentation](http://silhouette.mohiva.com/docs) for more information. If you need help with the integration of Silhouette into your project, don't hesitate and ask questions in our [mailing list](https://groups.google.com/forum/#!forum/play-silhouette) or on [Stack Overflow](http://stackoverflow.com/questions/tagged/playframework).
-
-### Slick
-
-The template stores all authentication information in a database via [Slick](http://slick.typesafe.com/) It uses an in memory [H2](www.h2database.com/) database by default.
-
-In order to use another database supported by Slick, you need to change the driver in your application.conf and add the corresponding JDBC driver to your dependencies. The [Play Slick documentation](https://www.playframework.com/documentation/2.4.x/PlaySlick) has more information about database configuration.
-
-## Activator
-
-This project template is also
-[hosted at typesafe](https://typesafe.com/activator/template/play-silhouette-slick-seed).
+If someone wants to contribute to clarify the issu and to make this new template working would be very usefull to expand templates of Silhouette project. The idea of implementing a JWTAuthenticator version of Silhouette Slick Seed Template is that you can have both: a web-based logging access and you can also work with the useful json-token for mobile apps.
 
 # License
 
